@@ -24,8 +24,9 @@ let isQuitting = false
 
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <rect x="2" y="2" width="28" height="28" rx="8" fill="#07101f"/>
-  <path d="M9 9h6v3h-3v3H9V9Zm8 0h6v6h-3v-3h-3V9ZM9 17h3v3h3v3H9v-6Zm11 0h3v6h-6v-3h3v-3Z" fill="#38bdf8"/>
+  <path d="M7 13V8a1 1 0 0 1 1-1h5M19 7h5a1 1 0 0 1 1 1v5M25 19v5a1 1 0 0 1-1 1h-5M13 25H8a1 1 0 0 1-1-1v-5" fill="none" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
+  <circle cx="16" cy="16" r="4" fill="none" stroke="#38bdf8" stroke-width="2.6"/>
+  <circle cx="16" cy="16" r="1.2" fill="#38bdf8"/>
 </svg>`
 
 function rendererUrl() {
@@ -161,8 +162,10 @@ async function upload(dataUrl: string) {
 
 function createTray() {
   const icon = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
+  if (process.platform === 'darwin') icon.setTemplateImage(true)
   tray = new Tray(icon.resize({ width: 18, height: 18 }))
   tray.setToolTip('CyberXShot')
+  if (process.platform === 'darwin') tray.setTitle('CyberXShot')
   const trayMenu = Menu.buildFromTemplate([
     { label: 'Nova captura', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
     { label: 'Abrir CyberXShot', click: () => createMainWindow().show() },

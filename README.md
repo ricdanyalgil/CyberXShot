@@ -41,7 +41,7 @@ There are no accounts, no capture history stored in the cloud, and no background
 | 🔗 | **Temporary links** | Create an explicit public link that automatically expires after one hour. |
 | 🔎 | **Visual search** | Send only the selected region to Google Lens to find similar images. |
 | 🛡️ | **Private by default** | Nothing leaves the device until you press Share or Visual Search. |
-| 🖥️ | **Native desktop workflow** | One-click menu bar capture, global shortcuts, optional launch at login, and multi-display awareness. |
+| 🖥️ | **Native desktop workflow** | A named menu bar control with one-click capture, global shortcuts, launch at login, and multi-display awareness. |
 | 🌗 | **Focused dark interface** | A polished UI designed to stay out of the way of your content. |
 
 ## Download
