@@ -25,7 +25,7 @@ let isQuitting = false
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <rect x="2" y="2" width="28" height="28" rx="8" fill="#07101f"/>
-  <path d="M9 9h6v3h-3v3H9V9Zm8 0h6v6h-3v-3h-3V9ZM9 17h3v3h3v3H9v-6Zm11 0h3v6h-6v-3h3v-3Z" fill="#32e6a1"/>
+  <path d="M9 9h6v3h-3v3H9V9Zm8 0h6v6h-3v-3h-3V9ZM9 17h3v3h3v3H9v-6Zm11 0h3v6h-6v-3h3v-3Z" fill="#38bdf8"/>
 </svg>`
 
 function rendererUrl() {
@@ -163,13 +163,14 @@ function createTray() {
   const icon = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
   tray = new Tray(icon.resize({ width: 18, height: 18 }))
   tray.setToolTip('CyberXShot')
-  tray.setContextMenu(Menu.buildFromTemplate([
+  const trayMenu = Menu.buildFromTemplate([
     { label: 'Nova captura', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
     { label: 'Abrir CyberXShot', click: () => createMainWindow().show() },
     { type: 'separator' },
     { label: 'Sair', click: () => { isQuitting = true; app.quit() } },
-  ]))
-  tray.on('double-click', () => void startCapture())
+  ])
+  tray.on('click', () => void startCapture())
+  tray.on('right-click', () => tray?.popUpContextMenu(trayMenu))
 }
 
 function registerIpc() {

@@ -6,8 +6,8 @@
       <stop offset="1" stop-color="#040810"/>
     </linearGradient>
     <linearGradient id="accent" x1="238" y1="210" x2="795" y2="828" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#62FFC2"/>
-      <stop offset="1" stop-color="#18C984"/>
+      <stop stop-color="#7DDCFF"/>
+      <stop offset="1" stop-color="#2585F4"/>
     </linearGradient>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="22"/>
@@ -17,8 +17,8 @@
     </filter>
   </defs>
   <rect x="60" y="60" width="904" height="904" rx="224" fill="url(#bg)" filter="url(#shadow)"/>
-  <rect x="73" y="73" width="878" height="878" rx="211" fill="none" stroke="#5CFFBE" stroke-opacity=".15" stroke-width="6"/>
-  <circle cx="512" cy="512" r="210" fill="#25E69C" opacity=".09" filter="url(#glow)"/>
+  <rect x="73" y="73" width="878" height="878" rx="211" fill="none" stroke="#67D4FF" stroke-opacity=".18" stroke-width="6"/>
+  <circle cx="512" cy="512" r="210" fill="#2585F4" opacity=".12" filter="url(#glow)"/>
   <path d="M270 430V270h160M594 270h160v160M754 594v160H594M430 754H270V594" fill="none" stroke="url(#accent)" stroke-width="54" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="512" cy="512" r="84" fill="none" stroke="url(#accent)" stroke-width="38"/>
   <circle cx="512" cy="512" r="24" fill="#E9FFF7"/>

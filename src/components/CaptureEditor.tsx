@@ -34,7 +34,7 @@ const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
   { id: 'blur', label: 'Desfocar', icon: WandSparkles },
 ]
 
-const colors = ['#ff4967', '#ffd166', '#32e6a1', '#56a8ff', '#ffffff', '#151a24']
+const colors = ['#ff4967', '#ffd166', '#38bdf8', '#2563eb', '#ffffff', '#151a24']
 
 export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
