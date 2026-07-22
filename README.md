@@ -50,19 +50,19 @@ There are no accounts, no capture history stored in the cloud, and no background
 
 ### macOS
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.8/CyberXShot-0.1.8-universal.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-0.1.9-universal.dmg)
 
 The universal build supports both Apple Silicon and Intel Macs. Open the DMG, drag CyberXShot into **Applications**, then grant **Screen Recording** permission when macOS requests it.
 
 ### Windows
 
-[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.8/CyberXShot-Setup-0.1.8-x64.exe)
-[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.8/CyberXShot-Portable-0.1.8-x64.exe)
+[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-Setup-0.1.9-x64.exe)
+[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-Portable-0.1.9-x64.exe)
 
 Choose the installer for normal use or the portable executable when you do not want to install anything.
 
-> [!NOTE]
-> Current binaries use ad hoc/unsigned distribution. macOS Gatekeeper or Windows SmartScreen may display a first-run warning until official Apple and Windows code-signing certificates are configured.
+> [!IMPORTANT]
+> macOS release builds require a Developer ID Application certificate and Apple notarization. The release workflow refuses to publish the macOS artifact when its signature, stapled ticket, or Gatekeeper assessment is invalid. Version 0.1.8 and older were distributed with an ad hoc signature and can still show a first-run warning.
 
 ## Editor tools
 
@@ -152,12 +152,26 @@ npm run dist:win  # Build NSIS installer and portable EXE on Windows
 
 Every push to `main` is tested on both macOS and Windows. Version tags automatically create a GitHub release with platform-specific downloads.
 
+### macOS release credentials
+
+Signed macOS releases require these GitHub Actions secrets:
+
+| Secret | Value |
+|---|---|
+| `MAC_CSC_LINK` | Base64-encoded `.p12` containing the Developer ID Application certificate and private key |
+| `MAC_CSC_KEY_PASSWORD` | Password used when exporting the `.p12` |
+| `APPLE_ID` | Apple Developer account email |
+| `APPLE_APP_SPECIFIC_PASSWORD` | App-specific password created at appleid.apple.com |
+| `APPLE_TEAM_ID` | 10-character Apple Developer Team ID |
+
+Never use the normal Apple ID password or commit certificate material to the repository.
+
 ## Roadmap
 
 - [ ] Optional encrypted local capture history
 - [ ] User-configurable and self-hosted upload providers
 - [ ] Window-level capture and keyboard-driven selection
-- [ ] Signed and notarized production binaries
+- [x] Signed and notarized production binaries
 - [x] Automatic update checks and Windows in-app installation
 - [ ] Signed and notarized macOS in-app installation
 - [ ] Additional interface languages

@@ -1,6 +1,6 @@
 {
   "name": "cyberxshot",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Captura de tela rápida, privada e multiplataforma para macOS e Windows.",
   "main": "dist-electron/main.cjs",
   "author": "CyberXShot contributors",
@@ -19,7 +19,7 @@
     "dev:electron": "wait-on tcp:5173 && tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "build": "tsc -b && vite build && tsc -p electron/tsconfig.json",
     "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "dist:mac": "bash scripts/build-mac.sh",
     "dist:win": "npm run build && electron-builder --win --publish never",
     "test": "vitest run",
     "test:watch": "vitest"
@@ -68,7 +68,11 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
-      "identity": "-",
+      "forceCodeSigning": true,
+      "hardenedRuntime": true,
+      "notarize": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.inherit.plist",
       "icon": "build/icon.png",
       "target": [
         "dmg",
@@ -78,6 +82,10 @@
       "extendInfo": {
         "NSScreenCaptureUsageDescription": "CyberXShot precisa acessar a tela para criar capturas selecionadas."
       }
+    },
+    "dmg": {
+      "sign": true,
+      "writeUpdateInfo": false
     },
     "win": {
       "icon": "build/icon.ico",

@@ -72,4 +72,27 @@ describe('CaptureEditor', () => {
       expect(screen.getByRole('button', { name: 'Desfazer' })).toBeEnabled()
     })
   })
+
+  it('insere texto no ponto escolhido sem depender de um diálogo do sistema', async () => {
+    const { container } = render(<CaptureEditor capture={{ dataUrl: 'data:image/png;base64,AA==', displayId: '1', scaleFactor: 1 }} />)
+    const canvas = container.querySelector('canvas')!
+
+    await waitFor(() => expect(context.drawImage).toHaveBeenCalled())
+    fireEvent.pointerDown(canvas, { clientX: 20, clientY: 20, pointerId: 1 })
+    fireEvent.pointerMove(canvas, { clientX: 420, clientY: 320, pointerId: 1 })
+    fireEvent.pointerUp(canvas, { clientX: 420, clientY: 320, pointerId: 1 })
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Texto' }))
+    fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100, pointerId: 2 })
+
+    const input = screen.getByRole('textbox', { name: 'Texto da anotação' })
+    fireEvent.change(input, { target: { value: 'Texto funcionando' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    await waitFor(() => {
+      expect(screen.queryByRole('textbox', { name: 'Texto da anotação' })).not.toBeInTheDocument()
+      expect(context.fillText).toHaveBeenCalledWith('Texto funcionando', 100, 100)
+      expect(screen.getByRole('button', { name: 'Desfazer' })).toBeEnabled()
+    })
+  })
 })

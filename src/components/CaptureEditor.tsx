@@ -38,6 +38,7 @@ const colors = ['#ff4967', '#ffd166', '#38bdf8', '#2563eb', '#ffffff', '#151a24'
 
 export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const textInputRef = useRef<HTMLInputElement>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
   const startRef = useRef<Point | null>(null)
   const draftRef = useRef<Annotation | null>(null)
@@ -48,6 +49,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   const [annotations, setAnnotations] = useState<Annotation[]>([])
   const [redoStack, setRedoStack] = useState<Annotation[]>([])
   const [dragging, setDragging] = useState(false)
+  const [textDraft, setTextDraft] = useState<{ point: Point; value: string } | null>(null)
   const [busy, setBusy] = useState<'upload' | 'search' | null>(null)
   const [error, setError] = useState('')
 
@@ -105,6 +107,10 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
     return () => window.removeEventListener('resize', onResize)
   }, [redraw])
 
+  useEffect(() => {
+    textInputRef.current?.focus()
+  }, [textDraft])
+
   const output = useCallback(() => {
     if (!selection || !imageRef.current) return null
     return exportSelection(imageRef.current, selection, annotations, { width: window.innerWidth, height: window.innerHeight })
@@ -148,6 +154,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement) return
       const command = event.metaKey || event.ctrlKey
       if (event.key === 'Escape') cancel()
       if (command && event.key.toLowerCase() === 'c') { event.preventDefault(); void copy() }
@@ -170,10 +177,11 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   function pointerDown(event: React.PointerEvent<HTMLCanvasElement>) {
     if (busy) return
     const current = point(event)
-    event.currentTarget.setPointerCapture(event.pointerId)
     setError('')
 
     if (!selection || tool === 'select') {
+      setTextDraft(null)
+      event.currentTarget.setPointerCapture(event.pointerId)
       startRef.current = current
       setSelection({ x: current.x, y: current.y, width: 0, height: 0 })
       setDragging(true)
@@ -183,14 +191,12 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
     if (!withinSelection(current)) return
 
     if (tool === 'text') {
-      const text = window.prompt('Digite o texto da anotação:')?.trim()
-      if (text) {
-        setAnnotations((items) => [...items, { id: crypto.randomUUID(), tool, start: current, end: current, color, lineWidth, text }])
-        setRedoStack([])
-      }
+      setTextDraft({ point: current, value: '' })
       return
     }
 
+    setTextDraft(null)
+    event.currentTarget.setPointerCapture(event.pointerId)
     startRef.current = current
     draftRef.current = {
       id: crypto.randomUUID(),
@@ -236,6 +242,24 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
     }
   }
 
+  function commitText() {
+    if (!textDraft) return
+    const text = textDraft.value.trim()
+    if (text) {
+      setAnnotations((items) => [...items, {
+        id: crypto.randomUUID(),
+        tool: 'text',
+        start: textDraft.point,
+        end: textDraft.point,
+        color,
+        lineWidth,
+        text,
+      }])
+      setRedoStack([])
+    }
+    setTextDraft(null)
+  }
+
   async function share(mode: 'upload' | 'search') {
     const png = output()
     if (!png || !window.cyberxshot) return
@@ -258,6 +282,33 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   return (
     <main className="capture-editor">
       <canvas ref={canvasRef} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} />
+      {textDraft && (
+        <input
+          ref={textInputRef}
+          className="text-annotation-input"
+          aria-label="Texto da anotação"
+          placeholder="Digite o texto…"
+          value={textDraft.value}
+          style={{
+            left: Math.min(textDraft.point.x, window.innerWidth - 236),
+            top: Math.max(8, textDraft.point.y - Math.max(16, lineWidth * 6) - 10),
+            color,
+            fontSize: Math.max(16, lineWidth * 6),
+          }}
+          onChange={(event) => setTextDraft({ ...textDraft, value: event.target.value })}
+          onBlur={commitText}
+          onKeyDown={(event) => {
+            event.stopPropagation()
+            if (event.key === 'Enter') {
+              event.preventDefault()
+              commitText()
+            } else if (event.key === 'Escape') {
+              event.preventDefault()
+              setTextDraft(null)
+            }
+          }}
+        />
+      )}
       {!selection || selection.width < 6 || selection.height < 6 ? (
         <div className="capture-hint"><Crop size={20} /><span>Arraste para selecionar uma área</span><kbd>Esc</kbd> para cancelar</div>
       ) : (

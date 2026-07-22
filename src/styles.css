@@ -117,6 +117,8 @@ button { color: inherit; }
 
 .capture-editor { position: fixed; inset: 0; overflow: hidden; background: #020407; font-family: 'DM Sans', sans-serif; }
 .capture-editor canvas { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }
+.text-annotation-input { position: fixed; z-index: 6; width: 220px; min-width: 80px; padding: 5px 7px; border: 1px solid currentColor; border-radius: 5px; outline: none; background: rgba(5,9,14,.92); box-shadow: 0 8px 24px rgba(0,0,0,.36); font-family: Inter, sans-serif; font-weight: 600; line-height: 1.2; caret-color: currentColor; }
+.text-annotation-input::placeholder { color: #8c9a96; font-size: 12px; font-weight: 500; }
 .capture-hint { position: fixed; left: 50%; top: 30px; transform: translateX(-50%); display: flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid rgba(255,255,255,.17); border-radius: 9px; color: #e9f2ef; background: rgba(5,9,14,.83); box-shadow: 0 8px 30px rgba(0,0,0,.35); backdrop-filter: blur(16px); font-size: 12px; pointer-events: none; }
 .capture-hint svg { color: var(--green); }
 .capture-hint kbd { margin-left: 8px; padding: 3px 6px; border: 1px solid #36413d; border-radius: 4px; color: #aebbb7; background: #141b20; font-size: 9px; }
