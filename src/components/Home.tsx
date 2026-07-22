@@ -5,6 +5,7 @@ import {
   Check,
   Cloud,
   Copy,
+  FolderOpen,
   Keyboard,
   MonitorUp,
   Moon,
@@ -15,6 +16,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from 'lucide-react'
+import type { CapturePreferences } from '../types'
 import { Brand } from './Brand'
 
 const features = [
@@ -31,10 +33,12 @@ export function Home() {
   const [platform, setPlatform] = useState('desktop')
   const [activeNav, setActiveNav] = useState<'home' | 'settings'>('home')
   const [starting, setStarting] = useState(false)
+  const [capturePreferences, setCapturePreferences] = useState<CapturePreferences>({ destination: 'clipboard', saveDirectory: '' })
 
   useEffect(() => {
     window.cyberxshot?.getLaunchAtLogin().then(setLaunchAtLogin).catch(() => undefined)
     window.cyberxshot?.getPlatform().then(setPlatform).catch(() => undefined)
+    window.cyberxshot?.getCapturePreferences().then(setCapturePreferences).catch(() => undefined)
   }, [])
 
   async function capture() {
@@ -58,6 +62,21 @@ export function Home() {
     }
   }
 
+  async function setDestination(destination: CapturePreferences['destination']) {
+    if (destination === 'folder' && !capturePreferences.saveDirectory) {
+      const selected = await window.cyberxshot?.chooseSaveDirectory()
+      if (selected) setCapturePreferences(selected)
+      return
+    }
+    const updated = await window.cyberxshot?.setCaptureDestination(destination)
+    if (updated) setCapturePreferences(updated)
+  }
+
+  async function chooseDirectory() {
+    const selected = await window.cyberxshot?.chooseSaveDirectory()
+    if (selected) setCapturePreferences(selected)
+  }
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -79,7 +98,7 @@ export function Home() {
           <strong>The Danyalgil Company</strong>
           <span>&amp; CyberX</span>
         </div>
-        <div className="version">CyberXShot v0.1.5</div>
+        <div className="version">CyberXShot v0.1.6</div>
       </aside>
 
       <main className="dashboard">
@@ -127,6 +146,28 @@ export function Home() {
               <div><strong>Iniciar com o sistema</strong><span>Deixa o CyberXShot pronto na bandeja ao entrar.</span></div>
               <button role="switch" aria-checked={launchAtLogin} className={`switch ${launchAtLogin ? 'on' : ''}`} onClick={toggleLaunch}><i /></button>
             </div>
+            <div className="settings-card destination-setting">
+              <div className="setting-icon"><Copy size={22} /></div>
+              <div>
+                <strong>Destino padrão</strong>
+                <span>Concluir uma captura copia para ⌘V ou salva direto na pasta escolhida.</span>
+              </div>
+              <div className="destination-options">
+                <button className={capturePreferences.destination === 'clipboard' ? 'selected' : ''} onClick={() => void setDestination('clipboard')}>
+                  <Copy size={14} /> Clipboard
+                </button>
+                <button className={capturePreferences.destination === 'folder' ? 'selected' : ''} onClick={() => void setDestination('folder')}>
+                  <FolderOpen size={14} /> Pasta
+                </button>
+              </div>
+            </div>
+            {capturePreferences.destination === 'folder' && (
+              <button className="folder-choice" onClick={() => void chooseDirectory()} title={capturePreferences.saveDirectory}>
+                <FolderOpen size={16} />
+                <span>{capturePreferences.saveDirectory || 'Escolher pasta'}</span>
+                <strong>Alterar</strong>
+              </button>
+            )}
             <div className="settings-card">
               <div className="setting-icon"><Keyboard size={22} /></div>
               <div><strong>Atalho global</strong><span>Disponível em qualquer aplicativo.</span></div>

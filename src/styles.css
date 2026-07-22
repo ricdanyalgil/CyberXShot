@@ -87,6 +87,14 @@ button { color: inherit; }
 .switch.on i { left: 21px; background: var(--green); box-shadow: 0 0 9px rgba(56,189,248,.35); }
 .shortcut.compact { margin-left: auto; }
 .fixed-choice { display: flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 5px; color: var(--green) !important; background: rgba(56,189,248,.08); }
+.destination-setting { align-items: center; flex-wrap: wrap; }
+.destination-options { display: flex !important; grid-auto-flow: column; gap: 5px !important; margin: 0 0 0 auto !important; }
+.destination-options button { display: flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; color: #73839a; background: #0c1421; font-size: 10px; cursor: pointer; }
+.destination-options button.selected { border-color: rgba(56,189,248,.35); color: var(--green); background: rgba(56,189,248,.09); }
+.folder-choice { display: flex; align-items: center; gap: 9px; width: 100%; margin: -2px 0 10px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; color: #7e91aa; background: rgba(10,18,30,.76); cursor: pointer; }
+.folder-choice svg { flex: none; color: var(--green); }
+.folder-choice span { overflow: hidden; margin-right: auto; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.folder-choice strong { color: var(--green); font-size: 10px; }
 .privacy-box { display: flex; gap: 13px; margin-top: 24px; padding: 17px; border: 1px solid rgba(56,189,248,.14); border-radius: 11px; color: var(--green); background: rgba(56,189,248,.04); }
 .privacy-box strong { color: #adc3bb; font-size: 12px; }
 .privacy-box p { margin: 5px 0 0; color: #667972; font-size: 10.5px; line-height: 1.55; }
@@ -107,6 +115,8 @@ button { color: inherit; }
 .tool-group { display: flex; gap: 2px; }
 .editor-toolbar button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 6px; color: #8c9a96; background: transparent; cursor: pointer; }
 .editor-toolbar button:hover, .editor-toolbar button.active { color: var(--green); background: rgba(56,189,248,.1); }
+.editor-toolbar button.finish { color: #04111e; background: var(--green); }
+.editor-toolbar button.finish:hover { color: #04111e; background: #6bd5ff; }
 .editor-toolbar button:disabled { opacity: .26; cursor: default; }
 .editor-toolbar button.share { color: #06110e; background: var(--green); }
 .editor-toolbar button.close:hover { color: #ff5b74; background: rgba(255,73,103,.1); }

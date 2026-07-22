@@ -113,6 +113,16 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
     if (png) await window.cyberxshot?.saveImage(png)
   }, [output])
 
+  const complete = useCallback(async () => {
+    const png = output()
+    if (!png || !window.cyberxshot) return
+    try {
+      await window.cyberxshot.completeCapture(png)
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Não foi possível concluir a captura.')
+    }
+  }, [output])
+
   const cancel = useCallback(() => { void window.cyberxshot?.cancelCapture() }, [])
   const undo = useCallback(() => {
     setAnnotations((items) => {
@@ -136,10 +146,11 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
       if (command && event.key.toLowerCase() === 'c') { event.preventDefault(); void copy() }
       if (command && event.key.toLowerCase() === 's') { event.preventDefault(); void save() }
       if (command && event.key.toLowerCase() === 'z') { event.preventDefault(); event.shiftKey ? redo() : undo() }
+      if (event.key === 'Enter' && selection) { event.preventDefault(); void complete() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [cancel, copy, redo, save, undo])
+  }, [cancel, complete, copy, redo, save, selection, undo])
 
   function point(event: React.PointerEvent): Point {
     return { x: event.clientX, y: event.clientY }
@@ -230,7 +241,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   }
 
   const toolbarStyle = selection ? {
-    left: Math.max(12, Math.min(selection.x, window.innerWidth - 710)),
+    left: Math.max(12, Math.min(selection.x, window.innerWidth - 748)),
     top: Math.min(window.innerHeight - 74, selection.y + selection.height + 10),
   } : undefined
 
@@ -261,6 +272,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
             <button title="Desfazer" aria-label="Desfazer" disabled={!annotations.length} onClick={undo}><Undo2 size={18} /></button>
             <button title="Refazer" aria-label="Refazer" disabled={!redoStack.length} onClick={redo}><Redo2 size={18} /></button>
             <span className="divider" />
+            <button className="finish" title="Concluir no destino padrão (Enter)" aria-label="Concluir captura" onClick={() => void complete()}><Check size={18} /></button>
             <button title="Copiar" aria-label="Copiar" onClick={() => void copy()}><Copy size={18} /></button>
             <button title="Salvar" aria-label="Salvar" onClick={() => void save()}><Save size={18} /></button>
             <button title="Pesquisar imagem semelhante" aria-label="Pesquisar imagem semelhante" onClick={() => void share('search')} disabled={!!busy}>{busy === 'search' ? <LoaderCircle className="spin" size={18} /> : <Images size={18} />}</button>

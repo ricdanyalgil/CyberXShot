@@ -21,8 +21,11 @@ let mainWindow: BrowserWindow | null = null
 let captureWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
-let permissionRetryTimer: ReturnType<typeof setTimeout> | null = null
-let permissionRetryCount = 0
+
+type CaptureDestination = 'clipboard' | 'folder'
+type CapturePreferences = { destination: CaptureDestination; saveDirectory: string }
+
+let capturePreferences: CapturePreferences = { destination: 'clipboard', saveDirectory: '' }
 
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
@@ -67,17 +70,55 @@ function createMainWindow() {
   return mainWindow
 }
 
-async function startCapture(isPermissionRetry = false) {
-  if (captureWindow && !captureWindow.isDestroyed()) return
-  if (!isPermissionRetry) {
-    if (permissionRetryTimer) clearTimeout(permissionRetryTimer)
-    permissionRetryTimer = null
-    permissionRetryCount = 0
+async function loadCapturePreferences() {
+  try {
+    const stored = JSON.parse(await fs.readFile(path.join(app.getPath('userData'), 'settings.json'), 'utf8')) as Partial<CapturePreferences>
+    capturePreferences = {
+      destination: stored.destination === 'folder' ? 'folder' : 'clipboard',
+      saveDirectory: typeof stored.saveDirectory === 'string' ? stored.saveDirectory : '',
+    }
+  } catch {
+    capturePreferences = { destination: 'clipboard', saveDirectory: '' }
   }
+}
 
-  mainWindow?.hide()
+async function saveCapturePreferences() {
+  const settingsDirectory = app.getPath('userData')
+  await fs.mkdir(settingsDirectory, { recursive: true })
+  await fs.writeFile(path.join(settingsDirectory, 'settings.json'), JSON.stringify(capturePreferences, null, 2), 'utf8')
+}
 
-  await new Promise((resolve) => setTimeout(resolve, 140))
+function captureFileName() {
+  return `CyberXShot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`
+}
+
+async function saveToDirectory(dataUrl: string, directory: string) {
+  await fs.mkdir(directory, { recursive: true })
+  const filePath = path.join(directory, captureFileName())
+  await fs.writeFile(filePath, dataUrlBuffer(dataUrl))
+  return filePath
+}
+
+async function hideMainWindowForCapture() {
+  const window = mainWindow
+  if (!window || window.isDestroyed() || !window.isVisible()) return
+  await new Promise<void>((resolve) => {
+    let finished = false
+    const done = () => {
+      if (finished) return
+      finished = true
+      resolve()
+    }
+    window.once('hide', done)
+    window.hide()
+    setTimeout(done, 120)
+  })
+  await new Promise((resolve) => setTimeout(resolve, 50))
+}
+
+async function startCapture() {
+  if (captureWindow && !captureWindow.isDestroyed()) return
+  await hideMainWindowForCapture()
   const cursor = screen.getCursorScreenPoint()
   const display = screen.getDisplayNearestPoint(cursor)
   const thumbnailSize = {
@@ -93,7 +134,7 @@ async function startCapture(isPermissionRetry = false) {
     })
     const source = sources.find((item) => item.display_id === String(display.id)) ?? sources[0]
     if (!source || source.thumbnail.isEmpty()) throw new Error('Não foi possível acessar a tela. Verifique a permissão de gravação de tela.')
-    permissionRetryCount = 0
+    const captureDataUrl = `data:image/png;base64,${source.thumbnail.toPNG().toString('base64')}`
 
     captureWindow = new BrowserWindow({
       x: display.bounds.x,
@@ -120,7 +161,7 @@ async function startCapture(isPermissionRetry = false) {
     captureWindow.on('closed', () => { captureWindow = null })
     captureWindow.webContents.once('did-finish-load', () => {
       captureWindow?.webContents.send('capture-ready', {
-        dataUrl: source.thumbnail.toDataURL(),
+        dataUrl: captureDataUrl,
         displayId: String(display.id),
         scaleFactor: display.scaleFactor,
       })
@@ -133,16 +174,7 @@ async function startCapture(isPermissionRetry = false) {
     captureWindow = null
     const errorMessage = error instanceof Error ? error.message : String(error)
 
-    if (process.platform === 'darwin' && /Failed to get sources|Não foi possível acessar a tela/i.test(errorMessage) && permissionRetryCount < 30) {
-      permissionRetryCount += 1
-      permissionRetryTimer = setTimeout(() => {
-        permissionRetryTimer = null
-        void startCapture(true)
-      }, 1500)
-      return
-    }
-
-    permissionRetryCount = 0
+    if (process.platform === 'darwin' && /Failed to get sources/i.test(errorMessage)) return
     const result = await dialog.showMessageBox({
       type: 'warning',
       title: 'Não foi possível capturar',
@@ -219,9 +251,14 @@ function registerIpc() {
     closeCapture()
   })
   ipcMain.handle('image:save', async (_event, dataUrl: string) => {
+    if (capturePreferences.destination === 'folder' && capturePreferences.saveDirectory) {
+      const filePath = await saveToDirectory(dataUrl, capturePreferences.saveDirectory)
+      closeCapture()
+      return { canceled: false, filePath }
+    }
     const options: Electron.SaveDialogOptions = {
       title: 'Salvar captura',
-      defaultPath: `CyberXShot-${new Date().toISOString().replace(/[:.]/g, '-')}.png`,
+      defaultPath: captureFileName(),
       filters: [{ name: 'Imagem PNG', extensions: ['png'] }],
     }
     const parent = captureWindow ?? mainWindow
@@ -231,6 +268,16 @@ function registerIpc() {
       closeCapture()
     }
     return result
+  })
+  ipcMain.handle('image:complete', async (_event, dataUrl: string) => {
+    if (capturePreferences.destination === 'folder' && capturePreferences.saveDirectory) {
+      const filePath = await saveToDirectory(dataUrl, capturePreferences.saveDirectory)
+      closeCapture()
+      return { destination: 'folder', filePath }
+    }
+    clipboard.writeImage(nativeImage.createFromDataURL(dataUrl))
+    closeCapture()
+    return { destination: 'clipboard' }
   })
   ipcMain.handle('image:upload', async (_event, dataUrl: string) => {
     const url = await upload(dataUrl)
@@ -249,6 +296,25 @@ function registerIpc() {
     return app.getLoginItemSettings().openAtLogin
   })
   ipcMain.handle('settings:get-launch-at-login', () => app.getLoginItemSettings().openAtLogin)
+  ipcMain.handle('settings:get-capture-preferences', () => capturePreferences)
+  ipcMain.handle('settings:set-capture-destination', async (_event, destination: CaptureDestination) => {
+    if (!['clipboard', 'folder'].includes(destination)) throw new Error('Destino inválido.')
+    capturePreferences.destination = destination
+    await saveCapturePreferences()
+    return capturePreferences
+  })
+  ipcMain.handle('settings:choose-save-directory', async () => {
+    const result = await dialog.showOpenDialog({
+      title: 'Escolha onde salvar as capturas',
+      defaultPath: capturePreferences.saveDirectory || app.getPath('pictures'),
+      properties: ['openDirectory', 'createDirectory'],
+    })
+    if (!result.canceled && result.filePaths[0]) {
+      capturePreferences = { destination: 'folder', saveDirectory: result.filePaths[0] }
+      await saveCapturePreferences()
+    }
+    return capturePreferences
+  })
   ipcMain.handle('app:platform', () => process.platform)
   ipcMain.handle('app:open-external', (_event, url: string) => {
     const parsed = new URL(url)
@@ -262,7 +328,8 @@ if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => void startCapture())
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
+    await loadCapturePreferences()
     registerIpc()
     createMainWindow()
     createTray()
