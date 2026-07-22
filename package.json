@@ -1,6 +1,6 @@
 {
   "name": "cyberxshot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Captura de tela rápida, privada e multiplataforma para macOS e Windows.",
   "main": "dist-electron/main.cjs",
   "author": "CyberXShot contributors",
@@ -15,8 +15,8 @@
     "dev:electron": "wait-on tcp:5173 && tsc -p electron/tsconfig.json && cross-env VITE_DEV_SERVER_URL=http://localhost:5173 electron .",
     "build": "tsc -b && vite build && tsc -p electron/tsconfig.json",
     "dist": "npm run build && electron-builder",
-    "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac --publish never",
+    "dist:win": "npm run build && electron-builder --win --publish never",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -66,14 +66,17 @@
     },
     "win": {
       "icon": "build/icon.ico",
-      "target": ["nsis", "portable"],
-      "artifactName": "CyberXShot-${version}-${arch}.${ext}"
+      "target": ["nsis", "portable"]
     },
     "nsis": {
+      "artifactName": "CyberXShot-Setup-${version}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
+    },
+    "portable": {
+      "artifactName": "CyberXShot-Portable-${version}-${arch}.${ext}"
     }
   }
 }

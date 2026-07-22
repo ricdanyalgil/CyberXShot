@@ -74,7 +74,7 @@ export function Home() {
           <Sparkles size={17} />
           <p><strong>Dica rápida</strong>O app continua disponível na bandeja mesmo com esta janela fechada.</p>
         </div>
-        <div className="version">CyberXShot v0.1.0</div>
+        <div className="version">CyberXShot v0.1.1</div>
       </aside>
 
       <main className="dashboard">
