@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            command: npm run dist:mac -- --universal
+            command: npm run dist:mac -- --arm64 --x64
           - os: windows-latest
             command: npm run dist:win
     runs-on: ${{ matrix.os }}
@@ -51,22 +51,33 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          app_path="$(find release -type d -name '*.app' -print -quit)"
-          if [[ -z "$app_path" ]]; then
+          app_paths=()
+          while IFS= read -r app_path; do app_paths+=("$app_path"); done < <(find release -mindepth 2 -maxdepth 2 -type d -name '*.app')
+          if [[ ${#app_paths[@]} -ne 2 ]]; then
             echo "::error::Packaged macOS app was not found."
             exit 1
           fi
-          codesign --verify --deep --strict --verbose=2 "$app_path"
-          xcrun stapler validate "$app_path"
-          spctl --assess --verbose=2 --type exec "$app_path"
-          dmg_path="$(find release -maxdepth 1 -type f -name '*.dmg' -print -quit)"
-          if [[ -z "$dmg_path" ]]; then
+          for app_path in "${app_paths[@]}"; do
+            codesign --verify --all-architectures --deep --strict --verbose=2 "$app_path"
+            xcrun stapler validate "$app_path"
+            spctl --assess --verbose=2 --type exec "$app_path"
+          done
+          dmg_paths=()
+          while IFS= read -r dmg_path; do dmg_paths+=("$dmg_path"); done < <(find release -maxdepth 1 -type f -name '*.dmg')
+          if [[ ${#dmg_paths[@]} -ne 2 ]]; then
             echo "::error::Packaged macOS DMG was not found."
             exit 1
           fi
-          codesign --verify --verbose=2 "$dmg_path"
-          xcrun stapler validate "$dmg_path"
-          spctl --assess --verbose=2 --type open --context context:primary-signature "$dmg_path"
+          for dmg_path in "${dmg_paths[@]}"; do
+            codesign --verify --verbose=2 "$dmg_path"
+            xcrun stapler validate "$dmg_path"
+            spctl --assess --verbose=2 --type open --context context:primary-signature "$dmg_path"
+            mount_dir="$(mktemp -d)"
+            hdiutil attach -nobrowse -readonly -mountpoint "$mount_dir" "$dmg_path"
+            codesign --verify --all-architectures --deep --strict --verbose=2 "$mount_dir/CyberXShot.app"
+            spctl --assess --verbose=2 --type exec "$mount_dir/CyberXShot.app"
+            hdiutil detach "$mount_dir"
+          done
       - uses: softprops/action-gh-release@v3
         with:
           files: release/*

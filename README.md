@@ -50,14 +50,15 @@ There are no accounts, no capture history stored in the cloud, and no background
 
 ### macOS
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-0.1.10-universal.dmg)
+[![Download for Apple Silicon](https://img.shields.io/badge/Download-macOS_Apple_Silicon-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.11/CyberXShot-0.1.11-arm64.dmg)
+[![Download for Intel Mac](https://img.shields.io/badge/Download-macOS_Intel-84928e?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.11/CyberXShot-0.1.11-x64.dmg)
 
-The universal build supports both Apple Silicon and Intel Macs. Open the DMG, drag CyberXShot into **Applications**, then grant **Screen Recording** permission when macOS requests it.
+Choose Apple Silicon for M-series Macs or Intel for older Macs. Open the DMG, drag CyberXShot into **Applications**, then grant **Screen Recording** permission when macOS requests it.
 
 ### Windows
 
-[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-Setup-0.1.10-x64.exe)
-[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-Portable-0.1.10-x64.exe)
+[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.11/CyberXShot-Setup-0.1.11-x64.exe)
+[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.11/CyberXShot-Portable-0.1.11-x64.exe)
 
 Choose the installer for normal use or the portable executable when you do not want to install anything.
 

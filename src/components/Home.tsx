@@ -37,7 +37,7 @@ export function Home() {
   const [activeNav, setActiveNav] = useState<'home' | 'settings'>('home')
   const [starting, setStarting] = useState(false)
   const [capturePreferences, setCapturePreferences] = useState<CapturePreferences>({ destination: 'clipboard', saveDirectory: '' })
-  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', currentVersion: '0.1.10', manualInstall: false })
+  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', currentVersion: '0.1.11', manualInstall: false })
 
   useEffect(() => {
     window.cyberxshot?.getLaunchAtLogin().then(setLaunchAtLogin).catch(() => undefined)
