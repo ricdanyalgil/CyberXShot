@@ -109,7 +109,7 @@ export function Home() {
 
             <footer className="privacy-line">
               <ShieldCheck size={16} /> Nada sai do seu computador sem sua ação.
-              <button onClick={() => window.cyberxshot?.openExternal('https://github.com/')}>Código aberto <ArrowUpRight size={14} /></button>
+              <button onClick={() => window.cyberxshot?.openExternal('https://github.com/ricdanyalgil/CyberXShot')}>Código aberto <ArrowUpRight size={14} /></button>
             </footer>
           </>
         ) : (
