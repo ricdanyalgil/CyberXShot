@@ -23,9 +23,12 @@ let mainWindow: BrowserWindow | null = null
 let captureWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+let installUpdateWhenReady = false
+let captureStarting = false
 
 type CaptureDestination = 'clipboard' | 'folder'
 type CapturePreferences = { destination: CaptureDestination; saveDirectory: string }
+type CapturePayload = { dataUrl: string; displayId: string; scaleFactor: number }
 type UpdateStatus = 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'ready' | 'error'
 type UpdateState = {
   status: UpdateStatus
@@ -38,10 +41,11 @@ type UpdateState = {
 }
 
 let capturePreferences: CapturePreferences = { destination: 'clipboard', saveDirectory: '' }
+let pendingCapture: CapturePayload | null = null
 let updateState: UpdateState = {
   status: 'idle',
   currentVersion: app.getVersion(),
-  manualInstall: process.platform === 'darwin',
+  manualInstall: false,
 }
 
 const traySvg = `
@@ -88,13 +92,15 @@ async function checkForUpdates() {
 }
 
 async function downloadUpdate() {
-  if (process.platform === 'darwin') {
-    await shell.openExternal(updateState.releaseUrl ?? releaseUrl(updateState.version))
-    return updateState
-  }
   if (updateState.status !== 'available') return updateState
+  installUpdateWhenReady = true
   setUpdateState({ status: 'downloading', percent: 0 })
-  await autoUpdater.downloadUpdate()
+  try {
+    await autoUpdater.downloadUpdate()
+  } catch (error) {
+    installUpdateWhenReady = false
+    throw error
+  }
   return updateState
 }
 
@@ -110,9 +116,7 @@ function setupAutoUpdater() {
       status: 'available',
       version: info.version,
       percent: undefined,
-      message: process.platform === 'darwin'
-        ? 'Uma nova versão está disponível para baixar.'
-        : 'Uma nova versão está pronta para baixar e instalar.',
+      message: 'Uma nova versão está pronta para baixar e instalar.',
       releaseUrl: releaseUrl(info.version),
     })
     showUpdateNotification('Atualização disponível', `CyberXShot ${info.version} está disponível.`)
@@ -124,10 +128,24 @@ function setupAutoUpdater() {
     setUpdateState({ status: 'downloading', percent: Math.round(progress.percent), message: 'Baixando atualização…' })
   })
   autoUpdater.on('update-downloaded', (info) => {
-    setUpdateState({ status: 'ready', version: info.version, percent: 100, message: 'Atualização pronta para instalar.' })
-    showUpdateNotification('Atualização pronta', 'Abra o CyberXShot para reiniciar e instalar.')
+    setUpdateState({
+      status: 'ready',
+      version: info.version,
+      percent: 100,
+      message: installUpdateWhenReady ? 'Download concluído. Reiniciando para instalar…' : 'Atualização pronta para instalar.',
+    })
+    if (installUpdateWhenReady) {
+      installUpdateWhenReady = false
+      setTimeout(() => {
+        isQuitting = true
+        autoUpdater.quitAndInstall(false, true)
+      }, 600)
+    } else {
+      showUpdateNotification('Atualização pronta', 'Abra o CyberXShot para reiniciar e instalar.')
+    }
   })
   autoUpdater.on('error', (error) => {
+    installUpdateWhenReady = false
     setUpdateState({ status: 'error', message: error.message })
   })
   setTimeout(() => void checkForUpdates(), 4000)
@@ -214,7 +232,7 @@ async function hideMainWindowForCapture() {
   await new Promise((resolve) => setTimeout(resolve, 50))
 }
 
-async function startCapture() {
+async function performCapture() {
   if (captureWindow && !captureWindow.isDestroyed()) {
     captureWindow.destroy()
     captureWindow = null
@@ -236,13 +254,19 @@ async function startCapture() {
     })
     const source = sources.find((item) => item.display_id === String(display.id)) ?? sources[0]
     if (!source || source.thumbnail.isEmpty()) throw new Error('Não foi possível acessar a tela. Verifique a permissão de gravação de tela.')
-    const captureDataUrl = `data:image/png;base64,${source.thumbnail.toPNG().toString('base64')}`
+    const payload: CapturePayload = {
+      dataUrl: `data:image/png;base64,${source.thumbnail.toPNG().toString('base64')}`,
+      displayId: String(display.id),
+      scaleFactor: display.scaleFactor,
+    }
+    pendingCapture = payload
 
-    captureWindow = new BrowserWindow({
+    const window = new BrowserWindow({
       x: display.bounds.x,
       y: display.bounds.y,
       width: display.bounds.width,
       height: display.bounds.height,
+      acceptFirstMouse: true,
       frame: false,
       transparent: false,
       resizable: false,
@@ -258,22 +282,32 @@ async function startCapture() {
         sandbox: true,
       },
     })
-    captureWindow.setAlwaysOnTop(true, 'screen-saver')
-    captureWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
-    captureWindow.on('closed', () => { captureWindow = null })
-    captureWindow.webContents.once('did-finish-load', () => {
-      captureWindow?.webContents.send('capture-ready', {
-        dataUrl: captureDataUrl,
-        displayId: String(display.id),
-        scaleFactor: display.scaleFactor,
-      })
-      captureWindow?.show()
-      captureWindow?.focus()
+    captureWindow = window
+    window.setAlwaysOnTop(true, 'screen-saver')
+    window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    window.webContents.on('before-input-event', (event, input) => {
+      if (input.type !== 'keyDown' || input.key !== 'Escape') return
+      event.preventDefault()
+      if (captureWindow === window) closeCapture()
     })
-    await captureWindow.loadURL(`${rendererUrl()}${isDev ? '?' : '#'}capture=1`)
+    window.on('closed', () => {
+      if (captureWindow !== window) return
+      captureWindow = null
+      pendingCapture = null
+    })
+    window.webContents.once('did-finish-load', () => {
+      if (window.isDestroyed()) return
+      window.webContents.send('capture-ready', payload)
+      window.show()
+      if (process.platform === 'darwin') app.focus({ steal: true })
+      window.focus()
+      window.webContents.focus()
+    })
+    await window.loadURL(`${rendererUrl()}${isDev ? '?' : '#'}capture=1`)
   } catch (error) {
     captureWindow?.destroy()
     captureWindow = null
+    pendingCapture = null
     const errorMessage = error instanceof Error ? error.message : String(error)
 
     if (process.platform === 'darwin' && /Failed to get sources/i.test(errorMessage)) return
@@ -289,16 +323,27 @@ async function startCapture() {
       cancelId: process.platform === 'darwin' ? 2 : 1,
     })
     if (result.response === 0) {
-      void startCapture()
+      setTimeout(() => void startCapture(), 0)
     } else if (process.platform === 'darwin' && result.response === 1) {
       await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
     }
   }
 }
 
+async function startCapture() {
+  if (captureStarting) return
+  captureStarting = true
+  try {
+    await performCapture()
+  } finally {
+    captureStarting = false
+  }
+}
+
 function closeCapture() {
   captureWindow?.destroy()
   captureWindow = null
+  pendingCapture = null
 }
 
 function dataUrlBuffer(dataUrl: string) {
@@ -348,6 +393,7 @@ function createTray() {
 
 function registerIpc() {
   ipcMain.handle('capture:start', () => startCapture())
+  ipcMain.handle('capture:get-pending', () => pendingCapture)
   ipcMain.handle('capture:cancel', () => closeCapture())
   ipcMain.handle('image:copy', (_event, dataUrl: string) => {
     clipboard.writeImage(nativeImage.createFromDataURL(dataUrl))
@@ -422,7 +468,7 @@ function registerIpc() {
   ipcMain.handle('update:check', () => checkForUpdates())
   ipcMain.handle('update:download', () => downloadUpdate())
   ipcMain.handle('update:install', () => {
-    if (updateState.status !== 'ready' || process.platform === 'darwin') return false
+    if (updateState.status !== 'ready') return false
     isQuitting = true
     autoUpdater.quitAndInstall(false, true)
     return true

@@ -38,7 +38,7 @@ There are no accounts, no capture history stored in the cloud, and no background
 | ↩️ | **Undo and redo** | Experiment freely while keeping every edit reversible. |
 | 📋 | **Clipboard first** | Copy the finished image and paste it directly into chat, email, docs, or design tools. |
 | ⚙️ | **Remembered destination** | Finish to the clipboard or save every capture directly into your chosen folder. |
-| 🔄 | **Update awareness** | Automatically check GitHub releases, show new versions, and install updates in-app on Windows. |
+| 🔄 | **Automatic updates** | Check GitHub releases, download, and install updates in-app on macOS and Windows. |
 | 💾 | **Lossless export** | Save crisp PNG files at the captured screen's native resolution. |
 | 🔗 | **Temporary links** | Create an explicit public link that automatically expires after one hour. |
 | 🔎 | **Visual search** | Send only the selected region to Google Lens to find similar images. |
@@ -50,14 +50,14 @@ There are no accounts, no capture history stored in the cloud, and no background
 
 ### macOS
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-0.1.9-universal.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-0.1.10-universal.dmg)
 
 The universal build supports both Apple Silicon and Intel Macs. Open the DMG, drag CyberXShot into **Applications**, then grant **Screen Recording** permission when macOS requests it.
 
 ### Windows
 
-[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-Setup-0.1.9-x64.exe)
-[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.9/CyberXShot-Portable-0.1.9-x64.exe)
+[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-Setup-0.1.10-x64.exe)
+[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.10/CyberXShot-Portable-0.1.10-x64.exe)
 
 Choose the installer for normal use or the portable executable when you do not want to install anything.
 
@@ -172,8 +172,7 @@ Never use the normal Apple ID password or commit certificate material to the rep
 - [ ] User-configurable and self-hosted upload providers
 - [ ] Window-level capture and keyboard-driven selection
 - [x] Signed and notarized production binaries
-- [x] Automatic update checks and Windows in-app installation
-- [ ] Signed and notarized macOS in-app installation
+- [x] Automatic update checks and in-app installation on macOS and Windows
 - [ ] Additional interface languages
 
 ## Contributing

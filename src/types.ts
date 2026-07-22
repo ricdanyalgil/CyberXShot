@@ -37,6 +37,7 @@ export type UpdateState = {
 export type CyberXShotApi = {
   onCapture: (callback: (payload: CapturePayload) => void) => () => void
   startCapture: () => Promise<void>
+  getPendingCapture: () => Promise<CapturePayload | null>
   cancelCapture: () => Promise<void>
   copyImage: (dataUrl: string) => Promise<void>
   saveImage: (dataUrl: string) => Promise<SaveResult>

@@ -37,7 +37,7 @@ export function Home() {
   const [activeNav, setActiveNav] = useState<'home' | 'settings'>('home')
   const [starting, setStarting] = useState(false)
   const [capturePreferences, setCapturePreferences] = useState<CapturePreferences>({ destination: 'clipboard', saveDirectory: '' })
-  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', currentVersion: '0.1.7', manualInstall: false })
+  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', currentVersion: '0.1.10', manualInstall: false })
 
   useEffect(() => {
     window.cyberxshot?.getLaunchAtLogin().then(setLaunchAtLogin).catch(() => undefined)
@@ -103,7 +103,7 @@ export function Home() {
 
   const updateBusy = updateState.status === 'checking' || updateState.status === 'downloading'
   const updateActionLabel = updateState.status === 'available'
-    ? updateState.manualInstall ? 'Abrir download' : 'Baixar atualização'
+    ? 'Baixar e instalar'
     : updateState.status === 'downloading'
       ? `Baixando ${updateState.percent ?? 0}%`
       : updateState.status === 'ready'
@@ -133,7 +133,7 @@ export function Home() {
           <strong>The Danyalgil Company</strong>
           <span>&amp; CyberX</span>
         </div>
-        <div className="version">CyberXShot v0.1.7</div>
+        <div className="version">CyberXShot v{updateState.currentVersion}</div>
       </aside>
 
       <main className="dashboard">

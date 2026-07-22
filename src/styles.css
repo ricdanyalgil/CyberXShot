@@ -111,7 +111,9 @@ button { color: inherit; }
 
 .capture-loading { display: grid; place-content: center; justify-items: center; height: 100%; color: #91a19b; background: #05080e; }
 .spinner { width: 28px; height: 28px; border: 2px solid rgba(56,189,248,.16); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; }
-.capture-loading p { font-size: 12px; }
+.capture-loading p { margin-bottom: 12px; font-size: 12px; }
+.capture-loading button { padding: 7px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 6px; color: #dce7e3; background: #111822; cursor: pointer; }
+.capture-loading small { margin-top: 8px; color: #687572; font-size: 9px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin .8s linear infinite; }
 

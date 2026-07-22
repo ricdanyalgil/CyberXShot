@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('cyberxshot', {
     return () => ipcRenderer.removeListener('capture-ready', listener)
   },
   startCapture: () => ipcRenderer.invoke('capture:start'),
+  getPendingCapture: () => ipcRenderer.invoke('capture:get-pending'),
   cancelCapture: () => ipcRenderer.invoke('capture:cancel'),
   copyImage: (dataUrl: string) => ipcRenderer.invoke('image:copy', dataUrl),
   saveImage: (dataUrl: string) => ipcRenderer.invoke('image:save', dataUrl),

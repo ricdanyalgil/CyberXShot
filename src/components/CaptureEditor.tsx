@@ -34,7 +34,7 @@ const tools: { id: Tool; label: string; icon: typeof Crop }[] = [
   { id: 'blur', label: 'Desfocar', icon: WandSparkles },
 ]
 
-const colors = ['#ff4967', '#ffd166', '#38bdf8', '#2563eb', '#ffffff', '#151a24']
+const colors = ['#ff0000', '#ffd166', '#38bdf8', '#2563eb', '#ffffff', '#151a24']
 
 export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -52,6 +52,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   const [textDraft, setTextDraft] = useState<{ point: Point; value: string } | null>(null)
   const [busy, setBusy] = useState<'upload' | 'search' | null>(null)
   const [error, setError] = useState('')
+  const isEditingText = textDraft !== null
 
   const redraw = useCallback((draft?: Annotation | null) => {
     const canvas = canvasRef.current
@@ -108,13 +109,23 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
   }, [redraw])
 
   useEffect(() => {
-    textInputRef.current?.focus()
-  }, [textDraft])
+    if (isEditingText) textInputRef.current?.focus({ preventScroll: true })
+  }, [isEditingText])
 
   const output = useCallback(() => {
     if (!selection || !imageRef.current) return null
-    return exportSelection(imageRef.current, selection, annotations, { width: window.innerWidth, height: window.innerHeight })
-  }, [annotations, selection])
+    const pendingText = textDraft?.value.trim()
+    const outputAnnotations: Annotation[] = pendingText && textDraft ? [...annotations, {
+      id: 'pending-text',
+      tool: 'text',
+      start: textDraft.point,
+      end: textDraft.point,
+      color,
+      lineWidth,
+      text: pendingText,
+    }] : annotations
+    return exportSelection(imageRef.current, selection, outputAnnotations, { width: window.innerWidth, height: window.innerHeight })
+  }, [annotations, color, lineWidth, selection, textDraft])
 
   const copy = useCallback(async () => {
     const png = output()
