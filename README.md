@@ -1,3 +1,5 @@
+<p align="center"><img src="build/icon.png" width="120" alt="CyberXShot" /></p>
+
 # CyberXShot
 
 Captura de tela rápida, editável e multiplataforma para macOS e Windows.

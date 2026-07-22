@@ -57,6 +57,7 @@
     "mac": {
       "category": "public.app-category.productivity",
       "identity": "-",
+      "icon": "build/icon.png",
       "target": ["dmg", "zip"],
       "artifactName": "CyberXShot-${version}-${arch}.${ext}",
       "extendInfo": {
@@ -64,6 +65,7 @@
       }
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": ["nsis", "portable"],
       "artifactName": "CyberXShot-${version}-${arch}.${ext}"
     },
