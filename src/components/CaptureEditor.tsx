@@ -58,12 +58,19 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
     const width = window.innerWidth
     const height = window.innerHeight
     const ratio = window.devicePixelRatio || 1
-    canvas.width = Math.round(width * ratio)
-    canvas.height = Math.round(height * ratio)
-    canvas.style.width = `${width}px`
-    canvas.style.height = `${height}px`
-    const ctx = canvas.getContext('2d')!
-    ctx.scale(ratio, ratio)
+    const pixelWidth = Math.round(width * ratio)
+    const pixelHeight = Math.round(height * ratio)
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+      canvas.width = pixelWidth
+      canvas.height = pixelHeight
+      canvas.style.width = `${width}px`
+      canvas.style.height = `${height}px`
+    }
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.setTransform(1, 0, 0, 1, 0, 0)
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
     ctx.drawImage(image, 0, 0, width, height)
     annotations.forEach((item) => drawAnnotation(ctx, item))
     if (draft) drawAnnotation(ctx, draft)
@@ -216,12 +223,15 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
 
   function pointerUp(event: React.PointerEvent<HTMLCanvasElement>) {
     if (!dragging) return
-    event.currentTarget.releasePointerCapture(event.pointerId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
     setDragging(false)
     startRef.current = null
-    if (draftRef.current) {
-      setAnnotations((items) => [...items, draftRef.current!])
-      draftRef.current = null
+    const completedAnnotation = draftRef.current
+    draftRef.current = null
+    if (completedAnnotation) {
+      setAnnotations((items) => [...items, completedAnnotation])
       setRedoStack([])
     }
   }
@@ -247,7 +257,7 @@ export function CaptureEditor({ capture }: { capture: CapturePayload }) {
 
   return (
     <main className="capture-editor">
-      <canvas ref={canvasRef} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} />
+      <canvas ref={canvasRef} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} />
       {!selection || selection.width < 6 || selection.height < 6 ? (
         <div className="capture-hint"><Crop size={20} /><span>Arraste para selecionar uma área</span><kbd>Esc</kbd> para cancelar</div>
       ) : (

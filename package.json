@@ -1,6 +1,6 @@
 {
   "name": "cyberxshot",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Captura de tela rápida, privada e multiplataforma para macOS e Windows.",
   "main": "dist-electron/main.cjs",
   "author": "CyberXShot contributors",

@@ -21,7 +21,8 @@ export function drawArrow(ctx: CanvasRenderingContext2D, start: { x: number; y: 
   ctx.stroke()
 }
 
-export function drawAnnotation(ctx: CanvasRenderingContext2D, item: Annotation) {
+export function drawAnnotation(ctx: CanvasRenderingContext2D, item: Annotation | null | undefined) {
+  if (!item) return
   ctx.save()
   ctx.strokeStyle = item.color
   ctx.fillStyle = item.color
