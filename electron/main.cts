@@ -10,6 +10,7 @@ import {
   nativeImage,
   screen,
   shell,
+  systemPreferences,
   Tray,
 } from 'electron'
 import path from 'node:path'
@@ -67,6 +68,23 @@ function createMainWindow() {
 
 async function startCapture() {
   if (captureWindow && !captureWindow.isDestroyed()) return
+
+  if (process.platform === 'darwin' && ['denied', 'restricted'].includes(systemPreferences.getMediaAccessStatus('screen'))) {
+    const result = await dialog.showMessageBox({
+      type: 'warning',
+      title: 'Permissão de captura necessária',
+      message: 'Autorize o CyberXShot a gravar a tela.',
+      detail: 'Abra Privacidade e Segurança → Gravação da Tela, ative o CyberXShot e reinicie o aplicativo.',
+      buttons: ['Abrir Ajustes', 'Agora não'],
+      defaultId: 0,
+      cancelId: 1,
+    })
+    if (result.response === 0) {
+      await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
+    }
+    return
+  }
+
   mainWindow?.hide()
 
   await new Promise((resolve) => setTimeout(resolve, 140))
@@ -123,12 +141,18 @@ async function startCapture() {
     captureWindow?.destroy()
     captureWindow = null
     createMainWindow().show()
-    await dialog.showMessageBox({
+    const result = await dialog.showMessageBox({
       type: 'warning',
       title: 'Permissão necessária',
       message: 'CyberXShot não conseguiu capturar a tela.',
       detail: error instanceof Error ? error.message : String(error),
+      buttons: process.platform === 'darwin' ? ['Abrir Ajustes', 'Fechar'] : ['Fechar'],
+      defaultId: 0,
+      cancelId: process.platform === 'darwin' ? 1 : 0,
     })
+    if (process.platform === 'darwin' && result.response === 0) {
+      await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
+    }
   }
 }
 
