@@ -10,7 +10,6 @@ import {
   nativeImage,
   screen,
   shell,
-  systemPreferences,
   Tray,
 } from 'electron'
 import path from 'node:path'
@@ -69,22 +68,6 @@ function createMainWindow() {
 async function startCapture() {
   if (captureWindow && !captureWindow.isDestroyed()) return
 
-  if (process.platform === 'darwin' && ['denied', 'restricted'].includes(systemPreferences.getMediaAccessStatus('screen'))) {
-    const result = await dialog.showMessageBox({
-      type: 'warning',
-      title: 'Permissão de captura necessária',
-      message: 'Autorize o CyberXShot a gravar a tela.',
-      detail: 'Abra Privacidade e Segurança → Gravação da Tela, ative o CyberXShot e reinicie o aplicativo.',
-      buttons: ['Abrir Ajustes', 'Agora não'],
-      defaultId: 0,
-      cancelId: 1,
-    })
-    if (result.response === 0) {
-      await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
-    }
-    return
-  }
-
   mainWindow?.hide()
 
   await new Promise((resolve) => setTimeout(resolve, 140))
@@ -140,17 +123,20 @@ async function startCapture() {
   } catch (error) {
     captureWindow?.destroy()
     captureWindow = null
-    createMainWindow().show()
     const result = await dialog.showMessageBox({
       type: 'warning',
-      title: 'Permissão necessária',
+      title: 'Não foi possível capturar',
       message: 'CyberXShot não conseguiu capturar a tela.',
-      detail: error instanceof Error ? error.message : String(error),
-      buttons: process.platform === 'darwin' ? ['Abrir Ajustes', 'Fechar'] : ['Fechar'],
+      detail: process.platform === 'darwin'
+        ? 'Se você acabou de liberar a gravação da tela, feche e abra o CyberXShot uma vez.\n\nDetalhes: ' + (error instanceof Error ? error.message : String(error))
+        : error instanceof Error ? error.message : String(error),
+      buttons: process.platform === 'darwin' ? ['Tentar novamente', 'Abrir Ajustes', 'Fechar'] : ['Tentar novamente', 'Fechar'],
       defaultId: 0,
-      cancelId: process.platform === 'darwin' ? 1 : 0,
+      cancelId: process.platform === 'darwin' ? 2 : 1,
     })
-    if (process.platform === 'darwin' && result.response === 0) {
+    if (result.response === 0) {
+      void startCapture()
+    } else if (process.platform === 'darwin' && result.response === 1) {
       await shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture')
     }
   }
@@ -186,17 +172,18 @@ async function upload(dataUrl: string) {
 
 function createTray() {
   const icon = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
-  if (process.platform === 'darwin') icon.setTemplateImage(true)
-  tray = new Tray(icon.resize({ width: 18, height: 18 }))
+  const trayIcon = icon.resize({ width: 18, height: 18 })
+  if (process.platform === 'darwin') trayIcon.setTemplateImage(true)
+  tray = new Tray(trayIcon)
   tray.setToolTip('CyberXShot')
   if (process.platform === 'darwin') tray.setTitle('CyberXShot')
   const trayMenu = Menu.buildFromTemplate([
-    { label: 'Nova captura', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
+    { label: 'Capturar área', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
     { label: 'Abrir CyberXShot', click: () => createMainWindow().show() },
     { type: 'separator' },
     { label: 'Sair', click: () => { isQuitting = true; app.quit() } },
   ])
-  tray.on('click', () => void startCapture())
+  tray.on('click', () => tray?.popUpContextMenu(trayMenu))
   tray.on('right-click', () => tray?.popUpContextMenu(trayMenu))
 }
 
