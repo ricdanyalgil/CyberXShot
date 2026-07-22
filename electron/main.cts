@@ -24,9 +24,9 @@ let isQuitting = false
 
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <path d="M7 13V8a1 1 0 0 1 1-1h5M19 7h5a1 1 0 0 1 1 1v5M25 19v5a1 1 0 0 1-1 1h-5M13 25H8a1 1 0 0 1-1-1v-5" fill="none" stroke="#38bdf8" stroke-width="2.6" stroke-linecap="round"/>
-  <circle cx="16" cy="16" r="4" fill="none" stroke="#38bdf8" stroke-width="2.6"/>
-  <circle cx="16" cy="16" r="1.2" fill="#38bdf8"/>
+  <path d="M11 8.5 13 5h6l2 3.5h3A4 4 0 0 1 28 12v11a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V12a4 4 0 0 1 4-3.5h3Z" fill="none" stroke="#000" stroke-width="2.5" stroke-linejoin="round"/>
+  <circle cx="16" cy="17.5" r="5" fill="none" stroke="#000" stroke-width="2.5"/>
+  <circle cx="24" cy="12.5" r="1.25" fill="#000"/>
 </svg>`
 
 function rendererUrl() {
