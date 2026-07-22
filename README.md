@@ -38,6 +38,7 @@ There are no accounts, no capture history stored in the cloud, and no background
 | ↩️ | **Undo and redo** | Experiment freely while keeping every edit reversible. |
 | 📋 | **Clipboard first** | Copy the finished image and paste it directly into chat, email, docs, or design tools. |
 | ⚙️ | **Remembered destination** | Finish to the clipboard or save every capture directly into your chosen folder. |
+| 🔄 | **Update awareness** | Automatically check GitHub releases, show new versions, and install updates in-app on Windows. |
 | 💾 | **Lossless export** | Save crisp PNG files at the captured screen's native resolution. |
 | 🔗 | **Temporary links** | Create an explicit public link that automatically expires after one hour. |
 | 🔎 | **Visual search** | Send only the selected region to Google Lens to find similar images. |
@@ -49,14 +50,14 @@ There are no accounts, no capture history stored in the cloud, and no background
 
 ### macOS
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.6/CyberXShot-0.1.6-universal.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS_Universal-38bdf8?style=for-the-badge&logo=apple&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.7/CyberXShot-0.1.7-universal.dmg)
 
 The universal build supports both Apple Silicon and Intel Macs. Open the DMG, drag CyberXShot into **Applications**, then grant **Screen Recording** permission when macOS requests it.
 
 ### Windows
 
-[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.6/CyberXShot-Setup-0.1.6-x64.exe)
-[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.6/CyberXShot-Portable-0.1.6-x64.exe)
+[![Windows installer](https://img.shields.io/badge/Download-Windows_Installer-56a8ff?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.7/CyberXShot-Setup-0.1.7-x64.exe)
+[![Windows portable](https://img.shields.io/badge/Download-Portable_EXE-84928e?style=for-the-badge&logo=windows&logoColor=white&labelColor=07101f)](https://github.com/ricdanyalgil/CyberXShot/releases/download/v0.1.7/CyberXShot-Portable-0.1.7-x64.exe)
 
 Choose the installer for normal use or the portable executable when you do not want to install anything.
 
@@ -157,7 +158,8 @@ Every push to `main` is tested on both macOS and Windows. Version tags automatic
 - [ ] User-configurable and self-hosted upload providers
 - [ ] Window-level capture and keyboard-driven selection
 - [ ] Signed and notarized production binaries
-- [ ] Automatic application updates
+- [x] Automatic update checks and Windows in-app installation
+- [ ] Signed and notarized macOS in-app installation
 - [ ] Additional interface languages
 
 ## Contributing

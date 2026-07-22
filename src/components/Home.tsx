@@ -5,6 +5,7 @@ import {
   Check,
   Cloud,
   Copy,
+  Download,
   FolderOpen,
   Keyboard,
   MonitorUp,
@@ -15,8 +16,10 @@ import {
   Settings2,
   ShieldCheck,
   Sparkles,
+  RefreshCw,
+  RotateCcw,
 } from 'lucide-react'
-import type { CapturePreferences } from '../types'
+import type { CapturePreferences, UpdateState } from '../types'
 import { Brand } from './Brand'
 
 const features = [
@@ -34,11 +37,14 @@ export function Home() {
   const [activeNav, setActiveNav] = useState<'home' | 'settings'>('home')
   const [starting, setStarting] = useState(false)
   const [capturePreferences, setCapturePreferences] = useState<CapturePreferences>({ destination: 'clipboard', saveDirectory: '' })
+  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle', currentVersion: '0.1.7', manualInstall: false })
 
   useEffect(() => {
     window.cyberxshot?.getLaunchAtLogin().then(setLaunchAtLogin).catch(() => undefined)
     window.cyberxshot?.getPlatform().then(setPlatform).catch(() => undefined)
     window.cyberxshot?.getCapturePreferences().then(setCapturePreferences).catch(() => undefined)
+    window.cyberxshot?.getUpdateState().then(setUpdateState).catch(() => undefined)
+    return window.cyberxshot?.onUpdateState(setUpdateState)
   }, [])
 
   async function capture() {
@@ -77,6 +83,35 @@ export function Home() {
     if (selected) setCapturePreferences(selected)
   }
 
+  async function checkUpdates() {
+    const state = await window.cyberxshot?.checkForUpdates()
+    if (state) setUpdateState(state)
+  }
+
+  async function updateAction() {
+    if (updateState.status === 'ready') {
+      await window.cyberxshot?.installUpdate()
+      return
+    }
+    if (updateState.status === 'available') {
+      const state = await window.cyberxshot?.downloadUpdate()
+      if (state) setUpdateState(state)
+      return
+    }
+    await checkUpdates()
+  }
+
+  const updateBusy = updateState.status === 'checking' || updateState.status === 'downloading'
+  const updateActionLabel = updateState.status === 'available'
+    ? updateState.manualInstall ? 'Abrir download' : 'Baixar atualização'
+    : updateState.status === 'downloading'
+      ? `Baixando ${updateState.percent ?? 0}%`
+      : updateState.status === 'ready'
+        ? 'Reiniciar e instalar'
+        : updateState.status === 'checking'
+          ? 'Verificando…'
+          : 'Verificar agora'
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -98,10 +133,21 @@ export function Home() {
           <strong>The Danyalgil Company</strong>
           <span>&amp; CyberX</span>
         </div>
-        <div className="version">CyberXShot v0.1.6</div>
+        <div className="version">CyberXShot v0.1.7</div>
       </aside>
 
       <main className="dashboard">
+        {['available', 'downloading', 'ready'].includes(updateState.status) && (
+          <aside className="update-banner">
+            <span className="update-banner-icon"><Download size={18} /></span>
+            <div>
+              <strong>{updateState.status === 'ready' ? 'Atualização pronta' : `CyberXShot ${updateState.version ?? ''} disponível`}</strong>
+              <small>{updateState.message}</small>
+              {updateState.status === 'downloading' && <i><b style={{ width: `${updateState.percent ?? 0}%` }} /></i>}
+            </div>
+            <button disabled={updateBusy} onClick={() => void updateAction()}>{updateActionLabel}</button>
+          </aside>
+        )}
         {activeNav === 'home' ? (
           <>
             <header className="dashboard-header">
@@ -177,6 +223,14 @@ export function Home() {
               <div className="setting-icon"><Moon size={22} /></div>
               <div><strong>Tema escuro</strong><span>Interface otimizada para não disputar atenção com sua tela.</span></div>
               <span className="fixed-choice"><Check size={14} /> Ativo</span>
+            </div>
+            <div className="settings-card update-setting">
+              <div className="setting-icon">{updateBusy ? <RefreshCw className="spin" size={22} /> : updateState.status === 'ready' ? <RotateCcw size={22} /> : <Download size={22} />}</div>
+              <div>
+                <strong>Atualizações</strong>
+                <span>{updateState.message ?? `Versão instalada: ${updateState.currentVersion}`}</span>
+              </div>
+              <button className="update-action" disabled={updateBusy} onClick={() => void updateAction()}>{updateActionLabel}</button>
             </div>
             <div className="privacy-box"><ShieldCheck size={22} /><div><strong>Compartilhamento consciente</strong><p>Ao criar um link ou pesquisar por imagem, a seleção é enviada para um serviço público temporário e removida após 1 hora.</p></div></div>
           </section>

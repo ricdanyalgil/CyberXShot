@@ -19,6 +19,15 @@ contextBridge.exposeInMainWorld('cyberxshot', {
   getCapturePreferences: () => ipcRenderer.invoke('settings:get-capture-preferences'),
   setCaptureDestination: (destination: 'clipboard' | 'folder') => ipcRenderer.invoke('settings:set-capture-destination', destination),
   chooseSaveDirectory: () => ipcRenderer.invoke('settings:choose-save-directory'),
+  onUpdateState: (callback: (state: unknown) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state)
+    ipcRenderer.on('update:state', listener)
+    return () => ipcRenderer.removeListener('update:state', listener)
+  },
+  getUpdateState: () => ipcRenderer.invoke('update:get-state'),
+  checkForUpdates: () => ipcRenderer.invoke('update:check'),
+  downloadUpdate: () => ipcRenderer.invoke('update:download'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
   getPlatform: () => ipcRenderer.invoke('app:platform'),
   openExternal: (url: string) => ipcRenderer.invoke('app:open-external', url),
 })

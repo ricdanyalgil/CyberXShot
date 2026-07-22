@@ -19,5 +19,7 @@ describe('Home', () => {
     expect(screen.getByText('Destino padrão')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /clipboard/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /pasta/i })).toBeInTheDocument()
+    expect(screen.getByText('Atualizações')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /verificar agora/i })).toBeInTheDocument()
   })
 })

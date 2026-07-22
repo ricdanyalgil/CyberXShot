@@ -24,6 +24,15 @@ export type SaveResult = { canceled: boolean; filePath?: string }
 export type UploadResult = { url: string }
 export type CapturePreferences = { destination: 'clipboard' | 'folder'; saveDirectory: string }
 export type CompleteResult = { destination: 'clipboard' | 'folder'; filePath?: string }
+export type UpdateState = {
+  status: 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'ready' | 'error'
+  currentVersion: string
+  version?: string
+  percent?: number
+  message?: string
+  manualInstall: boolean
+  releaseUrl?: string
+}
 
 export type CyberXShotApi = {
   onCapture: (callback: (payload: CapturePayload) => void) => () => void
@@ -39,6 +48,11 @@ export type CyberXShotApi = {
   getCapturePreferences: () => Promise<CapturePreferences>
   setCaptureDestination: (destination: CapturePreferences['destination']) => Promise<CapturePreferences>
   chooseSaveDirectory: () => Promise<CapturePreferences>
+  onUpdateState: (callback: (state: UpdateState) => void) => () => void
+  getUpdateState: () => Promise<UpdateState>
+  checkForUpdates: () => Promise<UpdateState>
+  downloadUpdate: () => Promise<UpdateState>
+  installUpdate: () => Promise<boolean>
   getPlatform: () => Promise<string>
   openExternal: (url: string) => Promise<void>
 }

@@ -8,12 +8,14 @@ import {
   ipcMain,
   Menu,
   nativeImage,
+  Notification,
   screen,
   shell,
   Tray,
 } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
+import { autoUpdater } from 'electron-updater'
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL)
 const appRoot = path.join(__dirname, '..')
@@ -24,8 +26,23 @@ let isQuitting = false
 
 type CaptureDestination = 'clipboard' | 'folder'
 type CapturePreferences = { destination: CaptureDestination; saveDirectory: string }
+type UpdateStatus = 'idle' | 'checking' | 'current' | 'available' | 'downloading' | 'ready' | 'error'
+type UpdateState = {
+  status: UpdateStatus
+  currentVersion: string
+  version?: string
+  percent?: number
+  message?: string
+  manualInstall: boolean
+  releaseUrl?: string
+}
 
 let capturePreferences: CapturePreferences = { destination: 'clipboard', saveDirectory: '' }
+let updateState: UpdateState = {
+  status: 'idle',
+  currentVersion: app.getVersion(),
+  manualInstall: process.platform === 'darwin',
+}
 
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
@@ -36,6 +53,86 @@ const traySvg = `
 
 function rendererUrl() {
   return isDev ? process.env.VITE_DEV_SERVER_URL! : `file://${path.join(appRoot, 'dist/index.html')}`
+}
+
+function releaseUrl(version?: string) {
+  return version
+    ? `https://github.com/ricdanyalgil/CyberXShot/releases/tag/v${version}`
+    : 'https://github.com/ricdanyalgil/CyberXShot/releases/latest'
+}
+
+function setUpdateState(next: Partial<UpdateState>) {
+  updateState = { ...updateState, ...next, currentVersion: app.getVersion() }
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('update:state', updateState)
+}
+
+function showUpdateNotification(title: string, body: string) {
+  if (!Notification.isSupported()) return
+  const notification = new Notification({ title, body, silent: true })
+  notification.on('click', () => createMainWindow().show())
+  notification.show()
+}
+
+async function checkForUpdates() {
+  if (isDev) {
+    setUpdateState({ status: 'current', message: 'Atualizações são verificadas no aplicativo instalado.' })
+    return updateState
+  }
+  setUpdateState({ status: 'checking', message: undefined, percent: undefined })
+  try {
+    await autoUpdater.checkForUpdates()
+  } catch (error) {
+    setUpdateState({ status: 'error', message: error instanceof Error ? error.message : String(error) })
+  }
+  return updateState
+}
+
+async function downloadUpdate() {
+  if (process.platform === 'darwin') {
+    await shell.openExternal(updateState.releaseUrl ?? releaseUrl(updateState.version))
+    return updateState
+  }
+  if (updateState.status !== 'available') return updateState
+  setUpdateState({ status: 'downloading', percent: 0 })
+  await autoUpdater.downloadUpdate()
+  return updateState
+}
+
+function setupAutoUpdater() {
+  if (isDev) return
+  autoUpdater.setFeedURL({ provider: 'github', owner: 'ricdanyalgil', repo: 'CyberXShot' })
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = true
+  autoUpdater.allowPrerelease = false
+  autoUpdater.allowDowngrade = false
+  autoUpdater.on('update-available', (info) => {
+    setUpdateState({
+      status: 'available',
+      version: info.version,
+      percent: undefined,
+      message: process.platform === 'darwin'
+        ? 'Uma nova versão está disponível para baixar.'
+        : 'Uma nova versão está pronta para baixar e instalar.',
+      releaseUrl: releaseUrl(info.version),
+    })
+    showUpdateNotification('Atualização disponível', `CyberXShot ${info.version} está disponível.`)
+  })
+  autoUpdater.on('update-not-available', () => {
+    setUpdateState({ status: 'current', version: undefined, percent: undefined, message: 'Você está usando a versão mais recente.' })
+  })
+  autoUpdater.on('download-progress', (progress) => {
+    setUpdateState({ status: 'downloading', percent: Math.round(progress.percent), message: 'Baixando atualização…' })
+  })
+  autoUpdater.on('update-downloaded', (info) => {
+    setUpdateState({ status: 'ready', version: info.version, percent: 100, message: 'Atualização pronta para instalar.' })
+    showUpdateNotification('Atualização pronta', 'Abra o CyberXShot para reiniciar e instalar.')
+  })
+  autoUpdater.on('error', (error) => {
+    setUpdateState({ status: 'error', message: error.message })
+  })
+  setTimeout(() => void checkForUpdates(), 4000)
+  const updateTimer = setInterval(() => void checkForUpdates(), 6 * 60 * 60 * 1000)
+  updateTimer.unref()
 }
 
 function createMainWindow() {
@@ -60,6 +157,7 @@ function createMainWindow() {
     },
   })
   void mainWindow.loadURL(rendererUrl())
+  mainWindow.webContents.on('did-finish-load', () => mainWindow?.webContents.send('update:state', updateState))
   mainWindow.on('close', (event) => {
     if (!isQuitting) {
       event.preventDefault()
@@ -117,7 +215,11 @@ async function hideMainWindowForCapture() {
 }
 
 async function startCapture() {
-  if (captureWindow && !captureWindow.isDestroyed()) return
+  if (captureWindow && !captureWindow.isDestroyed()) {
+    captureWindow.destroy()
+    captureWindow = null
+    await new Promise((resolve) => setTimeout(resolve, 60))
+  }
   await hideMainWindowForCapture()
   const cursor = screen.getCursorScreenPoint()
   const display = screen.getDisplayNearestPoint(cursor)
@@ -236,6 +338,7 @@ function createTray() {
   const trayMenu = Menu.buildFromTemplate([
     { label: 'Capturar área', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
     { label: 'Abrir CyberXShot', click: () => createMainWindow().show() },
+    { label: 'Verificar atualizações', click: () => { createMainWindow().show(); void checkForUpdates() } },
     { type: 'separator' },
     { label: 'Sair', click: () => { isQuitting = true; app.quit() } },
   ])
@@ -315,6 +418,15 @@ function registerIpc() {
     }
     return capturePreferences
   })
+  ipcMain.handle('update:get-state', () => updateState)
+  ipcMain.handle('update:check', () => checkForUpdates())
+  ipcMain.handle('update:download', () => downloadUpdate())
+  ipcMain.handle('update:install', () => {
+    if (updateState.status !== 'ready' || process.platform === 'darwin') return false
+    isQuitting = true
+    autoUpdater.quitAndInstall(false, true)
+    return true
+  })
   ipcMain.handle('app:platform', () => process.platform)
   ipcMain.handle('app:open-external', (_event, url: string) => {
     const parsed = new URL(url)
@@ -333,6 +445,7 @@ if (!gotLock) {
     registerIpc()
     createMainWindow()
     createTray()
+    setupAutoUpdater()
     globalShortcut.register('CommandOrControl+Shift+X', () => void startCapture())
     if (process.platform === 'win32') globalShortcut.register('PrintScreen', () => void startCapture())
   })
