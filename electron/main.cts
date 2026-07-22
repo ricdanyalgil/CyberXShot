@@ -21,6 +21,8 @@ let mainWindow: BrowserWindow | null = null
 let captureWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 let isQuitting = false
+let permissionRetryTimer: ReturnType<typeof setTimeout> | null = null
+let permissionRetryCount = 0
 
 const traySvg = `
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
@@ -65,8 +67,13 @@ function createMainWindow() {
   return mainWindow
 }
 
-async function startCapture() {
+async function startCapture(isPermissionRetry = false) {
   if (captureWindow && !captureWindow.isDestroyed()) return
+  if (!isPermissionRetry) {
+    if (permissionRetryTimer) clearTimeout(permissionRetryTimer)
+    permissionRetryTimer = null
+    permissionRetryCount = 0
+  }
 
   mainWindow?.hide()
 
@@ -86,6 +93,7 @@ async function startCapture() {
     })
     const source = sources.find((item) => item.display_id === String(display.id)) ?? sources[0]
     if (!source || source.thumbnail.isEmpty()) throw new Error('Não foi possível acessar a tela. Verifique a permissão de gravação de tela.')
+    permissionRetryCount = 0
 
     captureWindow = new BrowserWindow({
       x: display.bounds.x,
@@ -123,13 +131,25 @@ async function startCapture() {
   } catch (error) {
     captureWindow?.destroy()
     captureWindow = null
+    const errorMessage = error instanceof Error ? error.message : String(error)
+
+    if (process.platform === 'darwin' && /Failed to get sources|Não foi possível acessar a tela/i.test(errorMessage) && permissionRetryCount < 30) {
+      permissionRetryCount += 1
+      permissionRetryTimer = setTimeout(() => {
+        permissionRetryTimer = null
+        void startCapture(true)
+      }, 1500)
+      return
+    }
+
+    permissionRetryCount = 0
     const result = await dialog.showMessageBox({
       type: 'warning',
       title: 'Não foi possível capturar',
       message: 'CyberXShot não conseguiu capturar a tela.',
       detail: process.platform === 'darwin'
-        ? 'Se você acabou de liberar a gravação da tela, feche e abra o CyberXShot uma vez.\n\nDetalhes: ' + (error instanceof Error ? error.message : String(error))
-        : error instanceof Error ? error.message : String(error),
+        ? 'Conclua a autorização exibida pelo macOS e tente novamente.\n\nDetalhes: ' + errorMessage
+        : errorMessage,
       buttons: process.platform === 'darwin' ? ['Tentar novamente', 'Abrir Ajustes', 'Fechar'] : ['Tentar novamente', 'Fechar'],
       defaultId: 0,
       cancelId: process.platform === 'darwin' ? 2 : 1,
@@ -171,12 +191,16 @@ async function upload(dataUrl: string) {
 }
 
 function createTray() {
-  const icon = nativeImage.createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
-  const trayIcon = icon.resize({ width: 18, height: 18 })
+  const fallbackIcon = nativeImage
+    .createFromDataURL(`data:image/svg+xml;base64,${Buffer.from(traySvg).toString('base64')}`)
+    .resize({ width: 18, height: 18 })
+  const macIcon = process.platform === 'darwin'
+    ? nativeImage.createFromNamedImage('camera.viewfinder').resize({ width: 18, height: 18 })
+    : nativeImage.createEmpty()
+  const trayIcon = macIcon.isEmpty() ? fallbackIcon : macIcon
   if (process.platform === 'darwin') trayIcon.setTemplateImage(true)
   tray = new Tray(trayIcon)
   tray.setToolTip('CyberXShot')
-  if (process.platform === 'darwin') tray.setTitle('CyberXShot')
   const trayMenu = Menu.buildFromTemplate([
     { label: 'Capturar área', accelerator: 'CommandOrControl+Shift+X', click: () => void startCapture() },
     { label: 'Abrir CyberXShot', click: () => createMainWindow().show() },

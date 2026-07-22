@@ -79,7 +79,7 @@ export function Home() {
           <strong>The Danyalgil Company</strong>
           <span>&amp; CyberX</span>
         </div>
-        <div className="version">CyberXShot v0.1.4</div>
+        <div className="version">CyberXShot v0.1.5</div>
       </aside>
 
       <main className="dashboard">
